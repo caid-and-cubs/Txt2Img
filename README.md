@@ -1,52 +1,48 @@
 # Text to Image Generator
 
-A minimalist and professional web application that generates images from text descriptions using Stable Diffusion v1-5 AI model.
+A minimalist and professional web application that generates images from text descriptions using Stable Diffusion v1-4 via Hugging Face Inference API.
 
 ## Features
 
-- 🎨 **AI-Powered Image Generation**: Uses Stable Diffusion v1-5 for high-quality image synthesis
+- 🎨 **AI-Powered Image Generation**: Uses Stable Diffusion v1-4 via Hugging Face API
 - 🎯 **Minimalist UI**: Clean, professional interface with modern design
-- 🚀 **Fast Performance**: Optimized for both GPU and CPU environments
+- 🚀 **Lightweight**: No heavy ML dependencies - uses cloud API
 - 📱 **Responsive Design**: Works perfectly on desktop and mobile devices
 - 🐳 **Docker Ready**: Easy deployment with Docker and Docker Compose
 - 💾 **Image History**: View recently generated images
 - ⚡ **Real-time Progress**: Live feedback during image generation
+- 🌐 **Cloud-Powered**: No GPU required - powered by Hugging Face infrastructure
 
 ## Quick Start with Docker
 
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- (Optional) NVIDIA GPU with Docker GPU support for faster generation
+- Hugging Face account and API token
 
-### GPU-Enabled Deployment
+### Setup
 
-```bash
-# Clone the repository
-git clone https://github.com/caid-and-cubs/Txt2Img.git
-cd Txt2Img
+1. **Get your Hugging Face API Token**:
+   - Visit [Hugging Face Settings](https://huggingface.co/settings/tokens)
+   - Create a new token with "Read" permissions
+   - Copy the token for use in configuration
 
-# Build and run with GPU support
-docker-compose up --build
-```
+2. **Clone and Deploy**:
+   ```bash
+   # Clone the repository
+   git clone https://github.com/caid-and-cubs/Txt2Img.git
+   cd Txt2Img
 
-### CPU-Only Deployment
+   # Update docker-compose.yml with your token
+   # Replace 'your-huggingface-token-here' with your actual token
 
-If you don't have a GPU or NVIDIA Docker support:
+   # Build and run
+   docker-compose up --build
+   ```
 
-```bash
-# Edit docker-compose.yml and uncomment the CPU version
-# Comment out the GPU version and uncomment web-cpu service
-
-docker-compose up --build
-```
-
-### Manual CPU-Only Build
-
-```bash
-docker build -f Dockerfile.cpu -t txt2img-cpu .
-docker run -p 8000:8000 -v $(pwd)/media:/app/media txt2img-cpu
-```
+3. **Access the Application**:
+   - Open http://localhost:8000 in your browser
+   - Start generating images!
 
 ## Local Development
 
@@ -55,6 +51,7 @@ docker run -p 8000:8000 -v $(pwd)/media:/app/media txt2img-cpu
 - Python 3.11+
 - pip
 - Virtual environment (recommended)
+- Hugging Face API token
 
 ### Installation
 
@@ -70,11 +67,37 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Create .env file
+echo "HUGGINGFACE_API_TOKEN=your_token_here" > .env
+
 # Run migrations
 python manage.py migrate
 
 # Start development server
 python manage.py runserver
+```
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+SECRET_KEY=your-secret-key-here
+DEBUG=False
+HUGGINGFACE_API_TOKEN=hf_your_token_here
+```
+
+### Docker Environment
+
+Update `docker-compose.yml` environment section:
+
+```yaml
+environment:
+  - DEBUG=False
+  - SECRET_KEY=your-production-secret-key
+  - HUGGINGFACE_API_TOKEN=hf_your_token_here
 ```
 
 ## Usage
@@ -92,28 +115,6 @@ python manage.py runserver
 - "A cute cat wearing a wizard hat, watercolor painting"
 - "Abstract geometric patterns in blue and gold"
 
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-SECRET_KEY=your-secret-key-here
-DEBUG=False
-HUGGINGFACE_API_TOKEN=your-token-here  # Optional, for private models
-```
-
-### Docker Environment
-
-Update `docker-compose.yml` environment section:
-
-```yaml
-environment:
-  - DEBUG=False
-  - SECRET_KEY=your-production-secret-key
-```
-
 ## Production Deployment
 
 ### With Docker Compose (Recommended)
@@ -127,22 +128,23 @@ environment:
 
 1. Set `DEBUG=False` in settings
 2. Configure a proper secret key
-3. Set up a reverse proxy (nginx) for SSL termination
-4. Use a production database (PostgreSQL) if needed
-5. Configure static file serving
+3. Set your Hugging Face API token
+4. Set up a reverse proxy (nginx) for SSL termination
+5. Use a production database (PostgreSQL) if needed
 
 ## System Requirements
 
-### Minimum Requirements (CPU)
-- 4GB RAM
-- 2 CPU cores
-- 10GB disk space
+### Minimum Requirements
+- 1GB RAM
+- 1 CPU core
+- 2GB disk space
+- Internet connection for API calls
 
-### Recommended Requirements (GPU)
-- 8GB RAM
-- NVIDIA GPU with 6GB+ VRAM
-- 4 CPU cores
-- 20GB disk space
+### Recommended Requirements
+- 2GB RAM
+- 2 CPU cores
+- 5GB disk space
+- Stable internet connection
 
 ## API Endpoints
 
@@ -169,18 +171,27 @@ Response:
 
 ## Performance Notes
 
-- **GPU**: Generation typically takes 5-20 seconds
-- **CPU**: Generation may take 1-5 minutes depending on hardware
-- First generation takes longer due to model loading
-- Model is cached after first use
+- **Generation Time**: Typically 10-30 seconds depending on API load
+- **First Request**: May take longer if the model needs to load
+- **Rate Limits**: Subject to Hugging Face API rate limits
+- **No GPU Required**: Runs on any system with internet access
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Out of Memory**: Reduce image size or use CPU-only mode
-2. **Slow Generation**: Ensure GPU drivers are properly installed
-3. **Model Download Fails**: Check internet connection and disk space
+1. **Authentication Error**: Check your Hugging Face API token
+2. **Model Loading**: Wait 10-20 seconds and retry
+3. **Rate Limit**: Wait before making another request
+4. **Network Error**: Check internet connection
+
+### Getting API Token
+
+1. Visit [Hugging Face](https://huggingface.co)
+2. Sign up for a free account
+3. Go to Settings → Access Tokens
+4. Create a new token with "Read" permissions
+5. Copy and use in your configuration
 
 ### Logs
 
@@ -191,6 +202,12 @@ docker-compose logs web
 # View Django logs (local development)
 tail -f logs/django.log
 ```
+
+## Cost and Limits
+
+- **Free Tier**: Hugging Face offers free API access with rate limits
+- **No Infrastructure Costs**: No need for expensive GPU servers
+- **Scalable**: Automatically scales with Hugging Face infrastructure
 
 ## Contributing
 
@@ -206,8 +223,7 @@ This project is open source and available under the MIT License.
 ## Tech Stack
 
 - **Backend**: Django 5.1.4, Django REST Framework
-- **AI Model**: Stable Diffusion v1-5 via Diffusers
-- **ML Framework**: PyTorch
+- **AI Model**: Stable Diffusion v1-4 via Hugging Face Inference API
 - **Database**: SQLite (development), PostgreSQL (production)
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
 - **Containerization**: Docker, Docker Compose
@@ -215,6 +231,7 @@ This project is open source and available under the MIT License.
 
 ## Credits
 
-- Stable Diffusion model by Runway ML
+- Stable Diffusion model by CompVis
+- Hugging Face for API infrastructure
 - UI design inspired by modern minimalist principles
-- Built with Django and PyTorch
+- Built with Django and powered by Hugging Face

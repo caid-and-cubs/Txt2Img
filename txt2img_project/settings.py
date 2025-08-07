@@ -149,3 +149,11 @@ REST_FRAMEWORK = {
 
 # Hugging Face API settings
 HUGGINGFACE_API_TOKEN = os.getenv('HUGGINGFACE_API_TOKEN')
+
+# Validate required environment variables
+if not HUGGINGFACE_API_TOKEN:
+    import warnings
+    warnings.warn(
+        "HUGGINGFACE_API_TOKEN not set. Please set it in your environment variables or .env file. "
+        "Get your token from https://huggingface.co/settings/tokens"
+    )

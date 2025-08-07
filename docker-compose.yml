@@ -11,26 +11,5 @@ services:
     environment:
       - DEBUG=False
       - SECRET_KEY=your-secret-key-here
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - HUGGINGFACE_API_TOKEN=your-huggingface-token-here
     restart: unless-stopped
-
-  # Alternative CPU-only version (uncomment if no GPU available)
-  # web-cpu:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.cpu
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./media:/app/media
-  #     - ./db.sqlite3:/app/db.sqlite3
-  #   environment:
-  #     - DEBUG=False
-  #     - SECRET_KEY=your-secret-key-here
-  #   restart: unless-stopped

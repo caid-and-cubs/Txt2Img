@@ -1,98 +1,91 @@
-import torch
-from diffusers import StableDiffusionPipeline
+import requests
 from PIL import Image
 import io
 import time
 import logging
+import base64
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
-class StableDiffusionService:
-    """Service class for Stable Diffusion image generation"""
+class HuggingFaceStableDiffusionService:
+    """Service class for Hugging Face Stable Diffusion API"""
     
     def __init__(self):
-        self.pipeline = None
-        self.model_id = "runwayml/stable-diffusion-v1-5"  # Using v1-5 as it's more stable
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.api_url = "https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4"
+        self.headers = {
+            "Authorization": f"Bearer {settings.HUGGINGFACE_API_TOKEN}"
+        }
     
-    def load_model(self):
-        """Load the Stable Diffusion model"""
-        if self.pipeline is None:
-            try:
-                logger.info(f"Loading Stable Diffusion model on {self.device}")
-                
-                # Load the pipeline
-                self.pipeline = StableDiffusionPipeline.from_pretrained(
-                    self.model_id,
-                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                    use_safetensors=True
-                )
-                
-                # Move to device
-                self.pipeline = self.pipeline.to(self.device)
-                
-                # Enable memory efficient attention if CUDA is available
-                if self.device == "cuda":
-                    self.pipeline.enable_attention_slicing()
-                    # self.pipeline.enable_xformers_memory_efficient_attention()
-                
-                logger.info("Model loaded successfully")
-                
-            except Exception as e:
-                logger.error(f"Failed to load model: {e}")
-                raise e
-    
-    def generate_image(self, prompt, width=512, height=512, num_inference_steps=20, guidance_scale=7.5):
+    def generate_image(self, prompt, **kwargs):
         """
-        Generate an image from text prompt
+        Generate an image from text prompt using Hugging Face API
         
         Args:
             prompt (str): Text description of the image to generate
-            width (int): Width of the generated image
-            height (int): Height of the generated image
-            num_inference_steps (int): Number of denoising steps
-            guidance_scale (float): Guidance scale for generation
             
         Returns:
             tuple: (PIL Image, generation_time)
         """
-        if self.pipeline is None:
-            self.load_model()
-        
         start_time = time.time()
         
         try:
             logger.info(f"Generating image for prompt: {prompt}")
             
-            # Generate image
-            with torch.autocast(self.device):
-                result = self.pipeline(
-                    prompt=prompt,
-                    width=width,
-                    height=height,
-                    num_inference_steps=num_inference_steps,
-                    guidance_scale=guidance_scale,
-                    num_images_per_prompt=1
-                )
+            payload = {
+                "inputs": prompt,
+                "parameters": {
+                    "guidance_scale": 7.5,
+                    "num_inference_steps": 20,
+                    "width": 512,
+                    "height": 512
+                }
+            }
             
-            image = result.images[0]
-            generation_time = time.time() - start_time
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                json=payload,
+                timeout=60  # 60 seconds timeout
+            )
             
-            logger.info(f"Image generated successfully in {generation_time:.2f} seconds")
+            if response.status_code == 200:
+                # The response contains the image bytes
+                image_bytes = response.content
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                generation_time = time.time() - start_time
+                logger.info(f"Image generated successfully in {generation_time:.2f} seconds")
+                
+                return image, generation_time
             
-            return image, generation_time
+            elif response.status_code == 503:
+                # Model is loading, retry after a short wait
+                logger.warning("Model is loading, retrying in 10 seconds...")
+                time.sleep(10)
+                return self.generate_image(prompt, **kwargs)
+            
+            else:
+                error_msg = f"API request failed with status {response.status_code}: {response.text}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+                
+        except requests.exceptions.Timeout:
+            error_msg = "Request timeout - the API took too long to respond"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error: {str(e)}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
             
         except Exception as e:
-            logger.error(f"Failed to generate image: {e}")
+            error_msg = f"Failed to generate image: {str(e)}"
+            logger.error(error_msg)
             raise e
-    
-    def cleanup(self):
-        """Cleanup GPU memory"""
-        if self.pipeline is not None and self.device == "cuda":
-            torch.cuda.empty_cache()
 
 
 # Global instance
-stable_diffusion_service = StableDiffusionService()
+stable_diffusion_service = HuggingFaceStableDiffusionService()
