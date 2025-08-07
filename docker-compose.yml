@@ -6,6 +6,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Remplacez par votre vrai token Hugging Face (commence par hf_)
+      # ⚠️ REMPLACEZ par votre token Hugging Face (commence par hf_)
       # Obtenez-le sur: https://huggingface.co/settings/tokens
-      - HUGGINGFACE_API_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      - HUGGINGFACE_API_TOKEN=hf_YOUR_TOKEN_HERE

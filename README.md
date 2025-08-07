@@ -15,15 +15,25 @@ Application web simple pour générer des images à partir de texte via l'API Hu
 
 ### 2. Configurez le token
 
+**⚠️ SÉCURITÉ**: Ne jamais committer votre vrai token !
+
 **Option A: Docker (recommandé)**
 ```bash
-# Modifiez docker-compose.yml ligne 7 :
+# 1. Modifiez docker-compose.yml ligne 8 :
 HUGGINGFACE_API_TOKEN=hf_votre_token_ici
+
+# 2. Ou utilisez une variable d'environnement :
+export HUGGINGFACE_API_TOKEN=hf_votre_token_ici
+docker-compose up --build
 ```
 
-**Option B: Variable d'environnement**
+**Option B: Fichier .env**
 ```bash
-export HUGGINGFACE_API_TOKEN=hf_votre_token_ici
+# 1. Copiez le fichier d'exemple :
+cp .env.example .env
+
+# 2. Éditez .env avec votre token :
+HUGGINGFACE_API_TOKEN=hf_votre_token_ici
 ```
 
 ## Installation
@@ -36,6 +46,7 @@ cd Txt2Img
 ## Lancement
 
 ```bash
+# Configurez d'abord votre token (voir ci-dessus), puis :
 docker-compose up --build
 ```
 
@@ -54,5 +65,11 @@ python manage.py runserver
 - **Erreur 401** : Token manquant ou invalide
 - **Erreur 503** : Modèle en chargement, attendez 20s
 - **Token invalide** : Doit commencer par `hf_`
+
+## 🔒 Sécurité
+
+- ✅ Utilisez `.env` pour les secrets
+- ✅ Ajoutez `.env` au `.gitignore`
+- ❌ Ne commitez jamais de vrais tokens
 
 C'est tout ! 🎨
