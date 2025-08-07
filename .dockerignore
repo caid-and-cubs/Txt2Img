@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Documentation
+README.md
+docs/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment variables
+.env
+
+# Database
+*.sqlite3
+
+# Media files (will be mounted as volume)
+media/
